@@ -1,4 +1,4 @@
-# dsc180a-cis-eQTL-and-polygenic-risk-scores
+# Identifying cis-eQTLs in 1000 Genomes and Generating Polygenic Risk Scores for Heart Disease
 
 # Overview
 ## Part 1:
@@ -11,6 +11,9 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 # Retrieving the Data Locally
 (1) Download 1000 Genomes genotype data downloaded from the [LDREF](https://data.broadinstitute.org/alkesgroup/FUSION/LDREF.tar.bz2) \
 (2) Download the [gene expression](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07Q4P8GAV8/gd462.genequantrpkm.50fn.samplename.resk10.txt.gz) and [annotation files](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07S3PFDFV3/gene_annot.txt.gz)
+
+# Running the Project
+- To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
 
 
 
