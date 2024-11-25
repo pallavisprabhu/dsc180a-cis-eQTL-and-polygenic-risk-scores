@@ -9,7 +9,7 @@ a. across all genes genome-wide (n = 20K protein coding genes) Note: might need 
 Predict genetic risk for different diseases in 1000 Genomes individuals. Using Tiffany’s 23andme data, where does she fall on the distribution? Are the results reasonable?
 
 # Retrieving the Data Locally
-(1) Download 1000 Genomes genotype data downloaded from the [LDREF](https://data.broadinstitute.org/alkesgroup/FUSION/LDREF.tar.bz2)
+(1) Download 1000 Genomes genotype data downloaded from the [LDREF](https://data.broadinstitute.org/alkesgroup/FUSION/LDREF.tar.bz2) \
 (2) Download the [gene expression](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07Q4P8GAV8/gd462.genequantrpkm.50fn.samplename.resk10.txt.gz) and [annotation files](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07S3PFDFV3/gene_annot.txt.gz)
 
 
