@@ -10,7 +10,7 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 
 # Retrieving the Data Locally
 (1) Download 1000 Genomes genotype data downloaded from the [LDREF](https://data.broadinstitute.org/alkesgroup/FUSION/LDREF.tar.bz2) \
-(2) Download the [gene expression](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07Q4P8GAV8/gd462.genequantrpkm.50fn.samplename.resk10.txt.gz) and [annotation files](https://capstonegenet-5ps5007.slack.com/files/U043GE1CJAY/F07S3PFDFV3/gene_annot.txt.gz)
+(2) Download the [gene expression](https://drive.google.com/file/d/1EIj8pALKDAsck7JWAk31JZWPQtF0aS9w/view?usp=sharing) and [annotation files](https://drive.google.com/file/d/1db5vdekQsJ0f7aP34hnr6YXVuV-ov-2M/view?usp=sharing)
 
 # Running the Project
 - To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
