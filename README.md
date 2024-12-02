@@ -69,7 +69,6 @@ for i, gene in chrom.iterrows():
   chr = pd.DataFrame(gene_snps)
 ```
 
-# Completing Part 2
 Iterating through each of these coordinate rows of the `chr` DataFrame, write a tab delmited `txt` file for that row. Note that each gene should have its own `txt` file. Using this `txt` file, Plink2 can filter the SNPs within that gene body (the start and stop) using the bfiles from the 1000 Genomes. Plink2 may not be able to complete this for some genes due to being near the start or end of the chromosome, so keep track of the successes and errors to know which genes make it to the final product:
 ```py
 errors = []
@@ -266,7 +265,7 @@ def ciseQTL(chromosome): #chromosome as an integer
     
     return results_df
 ```
-
+## Defining the plotting function
 In order to plot the cis-eQTL, you need to plot it per gene since plotting the cis-eQTLs for the chromosome in its entirity would not make sense as we are interested in seeing which SNPs are statitsically significant in impacting gene expression for a specific gene.
 Create the function `cis_plot` which has two parameters, the summary statistics DataFrame created from the `cis-eQTL` function above, and a gene on that chromosome. The function filters the summary statistics to include information for only that gene and plots a locus plot, marking the threshold for signficance with a red dotted line for easier visualization. Note that instead of plotting the raw P-values, the $log_{10}(P-value)$ is plotted for better scaling. This means that lower P-values have higher $log_{10}(P-value)$ and data points above the line are significant.
 
