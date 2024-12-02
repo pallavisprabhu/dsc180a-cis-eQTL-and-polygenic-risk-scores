@@ -23,6 +23,22 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 - Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
 
 # Completing Part 1
+Create a Jupyter Notebook to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library:
+```py
+import pandas as pd
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import subprocess
+import os
+```
+
+Read in the expression data and gene expression data:
+```py
+expression_df = pd.read_csv('GD462.GeneQuantRPKM.50FN.samplename.resk10.txt', delim_whitespace=True)
+annotations = pd.read_csv('gene_annot.txt', delim_whitespace=True)
+```
 
 # Completing Part 2
 
