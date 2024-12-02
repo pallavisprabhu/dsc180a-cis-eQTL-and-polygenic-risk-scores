@@ -289,4 +289,49 @@ def cis_plot(sum_stats, gene):
   plt.show()
 ```
 
+# Part 2
+
+## Convert Tiffany's data into Plink file format
+First, convert Tiffany;'s data into vcf format. For this you will need the GRCh37 reference genome. Note that the following should be done in terminal.
+```bash
+mv Homo_sapiens.GRCh38.dna.primary_assembly.fa ref.fa #rename the file
+
+bgzip -c tiffany.txt > tiffany.tab.gz #zip Tiffany's data
+
+bcftools convert --tsv2vcf tiffany.tab.gz -f ref.fa -s Tiffany -Ob -o tiffany.bcf #convert the data into bcf file format
+
+bcftools view tiffany.bcf -Ov -o tiffany.vcf #convert to vcf file format
+
+./plink2 --vcf tiffany.vcf --make-bed --out tiffany_plink #convert to plink files
+
+```
+
+## Merge chromosome data
+Since all the chromosome data from 1000 Genomes are in separate files and Tiffany has her own file, for ease of the program, merge the data into one set of Plink files. Create a text file `all_chrs.txt` with the paths to all the 1000 Genomes data and Tiffany's data, exluding the first chromosome as that will be the base file:
+```text
+./LDREF/1000G.EUR.2
+./LDREF/1000G.EUR.3
+./LDREF/1000G.EUR.4
+...
+./LDREF/1000G.EUR.21
+./LDREF/1000G.EUR.22
+tiffany_plink
+```
+
+In terminal, run the following command in Plink to merge the data:
+```bash
+`./plink --bfile ./LDREF/1000G.EUR.1 --merge-list all_chrs.txt --make-bed -out all_chromosomes`
+```
+
+## Preprocessing the GWAS data
+Define the following function `extract_allele` to extract the effect allele from the SNP id (rsid):
+```py
+def extract_allele(rsid):
+    al = rsid.split('-')[1]
+    if al.isalpha():
+        return al
+    return '.'
+```
+
+
 
