@@ -436,6 +436,69 @@ except subprocess.CalledProcessError as e:
 
 prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 ```
+The final `prs` function should like:
+```py
+def prs(gwas, disease):
+    command= [
+            './plink2',
+            '--bfile', f'all_chromosomes',
+            '--clump-p1', '.0001',
+            '--clump-r2', '0.2',
+            '--clump-kb', '500',
+            '--clump', f'{disease}.txt', 
+            '--clump-snp-field', 'SNPS', 
+            '--clump-field', 'P-VALUE',
+            '--out', f'./clumped_{disease}']
+    
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        pass
+
+    command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
+    subprocess.run(command, shell=True, check=True)
+
+    folder = f"./b_{disease}"
+    file_path = os.makedirs(folder, exist_ok=True)
+
+    command2 = [
+            './plink2', 
+            '--bfile', f'all_chromosomes',
+            '--extract', f"./PRS.SNPs.{disease}", 
+            '--make-bed',
+            '--out', f'./b_{disease}/1000G_eur_PRS']
+
+    try:
+        result = subprocess.run(command2, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        pass 
+    
+
+    snp_file = f"./PRS.SNPs.{disease}"
+    y = pd.read_csv(snp_file, header=None, sep="\t")
+    y = y[y[0].str.len() > 0][0].tolist()
+    dis = pd.read_csv(f'{disease}.txt', sep='\t')
+    m = dis['SNPS'].isin(y)
+    score = pd.DataFrame({
+            'SNP': dis['SNPS'][m],
+            'A1': dis['A1'][m],
+            'BETA': dis['EFFECT'][m]})
+
+    score.to_csv(f"./score_file_{disease}.txt", index=False, header=False, sep="\t", quoting=3)
+
+    command3 = [
+        './plink2', '--bfile', f'./b_{disease}/1000G_eur_PRS',
+        '--out', f'./PRS_{disease}',
+        '--score', f"./score_file_{disease}.txt", '1', '2', '3']
+
+    try:
+        result = subprocess.run(command3, check=True)
+    except subprocess.CalledProcessError as e:
+        pass #print(e.stdout)
+
+    prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
+    return prs_score
+```
 
 ## Visualizing the PRS Scores
 It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
