@@ -319,17 +319,44 @@ tiffany_plink
 
 In terminal, run the following command in Plink to merge the data:
 ```bash
-`./plink --bfile ./LDREF/1000G.EUR.1 --merge-list all_chrs.txt --make-bed -out all_chromosomes`
+./plink --bfile ./LDREF/1000G.EUR.1 --merge-list all_chrs.txt --make-bed -out all_chromosomes
 ```
 
 ## Preprocessing the GWAS data
-Define the following function `extract_allele` to extract the effect allele from the SNP id (rsid):
+Define the following function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarctt the effect allele from one of the columns of the GWAS
 ```py
 def extract_allele(rsid):
     al = rsid.split('-')[1]
     if al.isalpha():
         return al
     return '.'
+```
+
+The GWAS data from the GWAS catalog needs some preprocessing in order to be used for the PRS score:
+- Load in the data in a DataFrame
+- Subset the DataFrame to include only these columns: `'CHR_ID'`,`'SNPS'`, `'OR or BETA'`, `'STRONGEST SNP-RISK ALLELE'`,`'P-VALUE'`
+- Apply the `extract_allele` function to the `'STRONGEST SNP-RISK ALLELE'` column and save this as the column `'A1'`
+- Rename the column `'OR or BETA'` to `'BETA'`
+- Drop the columns `'STRONGEST SNP-RISK ALLELE'` and `'OR or BETA'`
+- Some of the SNPs have multiple rows. Keep the ones with the lowest P-values
+- Create the column `'EFFECT'` that is the natural logarthim applied to the `'BETA'`
+- Remove all rows where `'A1'` is a `.` and drop all null values
+- Save this as a tab delimited file
+
+```py
+def clean_gwas(gwas, dis):
+    disease = pd.read_csv(file, sep= '\t')
+    disease = disease[['CHR_ID','SNPS', 'OR or BETA', 'STRONGEST SNP-RISK ALLELE','P-VALUE']]
+    disease['A1'] = disease['STRONGEST SNP-RISK ALLELE'].apply(extract_allele)
+    disease['BETA'] = disease['OR or BETA']
+    disease = disease.drop(columns=['STRONGEST SNP-RISK ALLELE', 'OR or BETA' ])
+    disease = disease.loc[disease.groupby('SNPS')['P-VALUE'].idxmin()].reset_index(drop=True)
+    disease['EFFECT'] = disease['BETA'].apply(np.log)
+    disease = disease[disease['A1'] != '.'].dropna()
+
+    diseases.to_csv(f'{dis}.txt', sep='\t', index=False)
+
+    return diseases
 ```
 
 
