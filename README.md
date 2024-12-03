@@ -359,5 +359,122 @@ def clean_gwas(gwas, dis):
     return diseases
 ```
 
+## Generating PRS scores
+To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the cleaned gwas `txt` file, and `disease`, the name of the disease as a string. The first step to creating a PRS score is to clump and threshold the data. Thresholding is the process of filtering out the SNPs that do not make the threshold of a specified P-value and $\text{R}^2$. Moreover, clumping is the process of removing dependent SNPs such that to limit linkage disequilibrium from closely associated or linked SNPs.
+```py
+command= [
+            './plink2',
+            '--bfile', f'all_chromosomes',
+            '--clump-p1', '.0001',
+            '--clump-r2', '0.2',
+            '--clump-kb', '500',
+            '--clump', f'{disease}.txt', 
+            '--clump-snp-field', 'SNPS', 
+            '--clump-field', 'P-VALUE',
+            '--out', f'./clumped_{disease}']
+    
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        pass
+```
+
+In order to extract the SNP Id's from the clumped output, run the following command:
+
+```py
+command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
+subprocess.run(command, shell=True, check=True)
+```
+
+Now we create bfiles including only those extracted SNPs:
+```py
+command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
+subprocess.run(command, shell=True, check=True)
+
+folder = f"./b_{disease}"
+file_path = os.makedirs(folder, exist_ok=True)
+
+command2 = [
+    './plink2', 
+    '--bfile', f'all_chromosomes',
+    '--extract', f"./PRS.SNPs.{disease}", 
+    '--make-bed',
+    '--out', f'./b_{disease}/1000G_eur_PRS']
+
+try:
+  result = subprocess.run(command2, check=True, capture_output=True, text=True)
+except subprocess.CalledProcessError as e:
+  pass 
+```
+
+Now we need to create a score file. To do this, we get all the extracted SNPs from output from above. Then, we read in the GWAS data. Find the intersection of SNPs in both files. For the SNPs that are from the clumped output and are in the GWAS, we extract its `'SNP'`, `'A1' `, and `EFFECT` and save these values to the score file
+
+```py
+snp_file = f"./PRS.SNPs.{disease}"
+y = pd.read_csv(snp_file, header=None, sep="\t")
+y = y[y[0].str.len() > 0][0].tolist()
+dis = pd.read_csv(f'{disease}.txt', sep='\t')
+m = dis['SNPS'].isin(y)
+score = pd.DataFrame({
+    'SNP': dis['SNPS'][m],
+    'A1': dis['A1'][m],
+    'BETA': dis['EFFECT'][m]})
+
+score.to_csv(f"./score_file_{disease}.txt", index=False, header=False, sep="\t", quoting=3)
+```
+Now, we can generate the PRS scores from the score file using Plink and return the PRS scores as a DataFrame:
+```py
+command3 = [
+    './plink2', '--bfile', f'./b_{disease}/1000G_eur_PRS',
+    '--out', f'./PRS_{disease}',
+    '--score', f"./score_file_{disease}.txt", '1', '2', '3']
+
+try:
+    result = subprocess.run(command3, check=True)
+except subprocess.CalledProcessError as e:
+    pass 
+
+prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
+```
+
+## Visualizing the PRS Scores
+It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
+```py
+def prs_plot(prs_df, dis):
+    prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
+    tiff = prs[prs['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
+
+    sns.set(font_scale=1)
+    plt.figure(figsize=(10, 6))
+    plt.hist(prs_df['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
+    plt.axvline(tiff_heart, color='r', linestyle='--', label='Tiffany')
+    plt.xlabel('PRS Score')
+    plt.ylabel('Frequency')
+    plt.title(f"PRS Distribution for {dis} Disease")
+    plt.legend()
+
+    folder = f"./prs_graphs"
+    file_path = os.makedirs(folder, exist_ok=True)
+    plt.savefig(f"./prs_graphs/{dis}.png", dpi=300, bbox_inches='tight')
+
+    plt.show()
+```
+In order to find the PRS and its distribution for each disease, simply call the `clean_gwas` function on each disease, call `prs` with the cleaned file, and call `prs_plot` with the name of the disease.
+```py
+diabetes = clean_gwas('diabetes_gwas.tsv', 'Diabetes')
+prs_diabetes = prs(diabetes, 'Diabetes')
+prs_plot('Diabetes')
+
+heart = clean_gwas('heart_gwas.tsv', 'Heart')
+prs_heart = prs(heart, 'Heart')
+prs_plot('Heart')
+
+parkinsons = clean_gwas('parkinsons_gwas.tsv', 'Parkinsons')
+prs_parkinsons = prs(parkinsons, 'Parkinsons')
+prs_plot('Parkinsons')
+```
+
+
+
 
 
