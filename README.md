@@ -36,9 +36,9 @@ import subprocess
 import os
 ```
 ## Define the function `ciseQTL`
-`ciseQTL` takes in one argument, the chromosome number as an integer and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
+`ciseQTL` takes in one argument, the chromosome number as an integer and outputs a summary statistics file with the Chromosome, Gene, SNP, $\beta_0$, $\beta_1$, $\text{R}^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
 
-### Define the function `extract_protein`
+### Define the helper function `extract_protein`
 The gene expression data contains expression for various types of genes in the genome. Create the helper function `extract_protein` which returns the gene expression data and annotation data for only the protein-coding genes:
 
 Read in the expression data and gene expression data:
@@ -53,7 +53,7 @@ protein_coding = annotations[annotations['TYPE'] == 'protein_coding']
 intersection = np.intersect1d(np.array(expression_df['TargetID'].apply(lambda x: x.split('.')[0])), np.array(protein_coding['SYM']))
 protein_exp = expression_df[expression_df['TargetID'].apply(lambda x: x.split('.')[0]).apply(lambda x: x in intersection)]
 ```
-The function should return the `protein_exp` DataFrame which contains all the expression levels for the protein-coding genes and the `protein_coding` DataFrame which contains the annotations for all the protein-coding genes. Note that this code assumes that the gene expression file and annotation file are in the same directory and have not been renamed. If this is not the case, edit the code such that `pd.read_csv` in the helper function reads the file paths to each respective file.
+The function should return the `protein_exp` DataFrame which contains all the expression levels for the protein-coding genes and the `protein_coding` DataFrame which contains the annotations for all the protein-coding genes. Note that this code assumes that the gene expression file (`'GD462.GeneQuantRPKM.50FN.samplename.resk10.txt'`) and annotation file (`'gene_annot.txt'`) are in the same directory and have not been renamed. If this is not the case, edit the code such that `pd.read_csv` in the helper function reads the file paths to each respective file.
 ```py
 def extract_protein(exp_path, annot_path):
     expression_df = pd.read_csv('GD462.GeneQuantRPKM.50FN.samplename.resk10.txt', delim_whitespace=True)
@@ -64,13 +64,13 @@ def extract_protein(exp_path, annot_path):
     return protein_exp, protein_coding
 ```
 
-Call the previously defined `extract_protein` function and returns the gene expression and annotation DataFrames with nly the protein-coding genes. The, query the protein_coding DataFrame to only include genes on that input chromosome. 
+Call the previously defined `extract_protein` function and returns the gene expression and annotation DataFrames with only the protein-coding genes. Then, query the protein_coding DataFrame to only include genes on that given input chromosome. 
 ```py
 protein_exp, protein_coding = extract_protein(exp_path, annot_path)
 chrom = protein_coding[protein_coding['CHR'] == chromosome]
 ```
 
-Then, it iterates through all the rows, one for each gene, to create a coordinate row that defines where the gene stops and ends. Since cis is defined as 500Kb (kilobases) of the gene body, we create that range by making the start of the gene body 500Kb upstream the gene's start and the end of the gene body 500Kb downstream the gene's end. Each of this coordinates for each gene is saved all are loaded into a singular DataFrame:
+Then, iterate through all the rows, one for each gene, to create a coordinate row that defines where the gene stops and ends. Since cis is defined as 500Kb (kilobases) of the gene body, we create that range by making the start of the gene body 500Kb upstream the gene's start and the end of the gene body 500Kb downstream the gene's end. Each of this coordinates for each gene is saved all are loaded into a singular DataFrame:
 ```py
 chrom = protein_coding[protein_coding['CHR'] == chromosome]
 chr_str = 'chr' + str(chromosome)
@@ -84,7 +84,7 @@ for i, gene in chrom.iterrows():
   chr = pd.DataFrame(gene_snps)
 ```
 
-Iterating through each of these coordinate rows of the `chr` DataFrame, write a tab delmited `txt` file for that row. Note that each gene should have its own `txt` file. Using this `txt` file, Plink2 can filter the SNPs within that gene body (the start and stop) using the bfiles from the 1000 Genomes. Plink2 may not be able to complete this for some genes due to being near the start or end of the chromosome, so keep track of the successes and errors to know which genes make it to the final product:
+Iterating through each of these coordinate rows of the `chr` DataFrame, write a tab delmited `txt` file for that row. Note that each gene should have its own `txt` file. Using this `txt` file, Plink2 can filter the SNPs within that gene body (the start and stop) using the bfiles from the 1000 Genomes. Plink2 may not be able to compute this for some genes due to being near the start or end of the chromosome, so keep track of the `successes` and `errors` to know which genes make it to the final product:
 ```py
 errors = []
 successes = []
@@ -119,7 +119,7 @@ for _, row in chr.iterrows():
             errors.append(gene)
 ```
 
-Now each gene has a set of bfiles (`bim/bed/fam`) with the SNPs in the cis-region. Now filter the gene expression DataFrame to include only genes on the chromosome. In order to read the genotype data for each gene now, convert the file into `.raw` format using Plink2:
+Now each gene in `successes` has a set of bfiles (`bim/bed/fam`) with the SNPs in the cis-region. Now filter the gene expression DataFrame to include only genes on the chromosome. In order to read the genotype data for each gene now, convert the file into `.raw` format using Plink2:
 ```py
 exp_protein = protein_exp[protein_exp['Chr'] == str(chromosome)]
 
@@ -400,14 +400,14 @@ except subprocess.CalledProcessError as e:
   pass
 ```
 
-In order to extract the SNP Ids from the clumped output, run the following command:
+In order to extract the SNP ids from the clumped output, run the following command:
 
 ```py
 command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
 subprocess.run(command, shell=True, check=True)
 ```
 
-Now we create Plink bfiles (`bed`,`bim`,`fam`) including only those extracted SNPs:
+Now create Plink bfiles (`bed`,`bim`,`fam`) including only those extracted SNPs:
 ```py
 command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
 subprocess.run(command, shell=True, check=True)
@@ -428,7 +428,7 @@ except subprocess.CalledProcessError as e:
   pass 
 ```
 
-Now we need to create a score file. To do this, we get all the extracted SNPs from output from above. Then, we read in the GWAS data. Find the intersection of SNPs in both files. For the SNPs that are from the clumped output and are in the GWAS, we extract its `'SNP'`, `'A1' `, and `EFFECT` and save these values to the score file
+Now we need to create a score file. To do this, we get all the extracted SNPs from output from above. Then, we read in the GWAS data and find the intersection of SNPs in both files. For the SNPs that are from the clumped output and are in the GWAS, we extract its `'SNP'`, `'A1' `, and `EFFECT` and save these values to the score file.
 
 ```py
 snp_file = f"./PRS.SNPs.{disease}"
@@ -458,7 +458,7 @@ except subprocess.CalledProcessError as e:
 prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 ```
 ### Visualizing the PRS Scores
-It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the helper function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
+It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the helper function `prs_plot` that takes in the DataFrame to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
 ```py
 def prs_plot(dis):
     tiff = prs_score[prs_score['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
