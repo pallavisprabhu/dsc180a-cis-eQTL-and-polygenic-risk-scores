@@ -21,7 +21,6 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 - Download `bcftools` either [here](https://www.htslib.org/download/) or of you have Homebrew installed, by: `brew install bcftools`
 - Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that works with your device.
 - Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
-- 
 
 # Completing Part 1
 Create a Jupyter Notebook to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library:
