@@ -14,7 +14,9 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 (4) Download the [GRCh37](https://ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz) reference genome \
 (5) Download [Diabetes GWAS](https://drive.google.com/file/d/1tCAYBW8KPqNlx3AGlbEWcOCZiOsXEQKe/view?usp=sharing) \
 (6) Download [Heart Disease GWAS](https://drive.google.com/file/d/1muZDyipGbDmzNhRnNcrSeDL_1faY9l4c/view?usp=sharing) \
-(7) Download [Parkinson's GWAS](https://drive.google.com/file/d/1623dNwgbtf4cv0fcQuKKaIOEGErHcRs5/view?usp=sharing) 
+(7) Download [Parkinson's GWAS](https://drive.google.com/file/d/1623dNwgbtf4cv0fcQuKKaIOEGErHcRs5/view?usp=sharing) \
+(8) Download [Skin Cancer Gwas](https://drive.google.com/file/d/1jx4bOyGr2UITtBeo951izRxqXCPPM1ON/view?usp=sharing) \
+(9) Download [Arthritis GWAS](https://drive.google.com/file/d/115mKOZl62sqwOmY9rozbG8FpihQZqcYc/view?usp=sharing)
 
 # Running the Project
 - To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
@@ -589,6 +591,8 @@ In order to find the PRS and its distribution for each disease, simply  `prs` wi
 diabetes = prs(diabetes_gwas.tsv, 'diabetes')
 heart = prs(heart_gwas.tsv, 'heart')
 parkinsons = prs(parkinsons_gwas.tsv, 'parkinsons')
+skinCancer = prs(skin_cancer_gwas.tsv, 'skinCancer')
+arthritis = prs(arthritis.tsv, 'arthritis')
 ```
 
 
