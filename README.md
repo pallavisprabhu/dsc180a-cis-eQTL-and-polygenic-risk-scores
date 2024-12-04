@@ -18,8 +18,10 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 
 # Running the Project
 - To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
+- Download `bcftools` either [here](https://www.htslib.org/download/) or of you have Homebrew installed, by: `brew install bcftools`
 - Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that works with your device.
 - Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
+- 
 
 # Completing Part 1
 Create a Jupyter Notebook to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library:
@@ -32,8 +34,8 @@ import seaborn as sns
 import subprocess
 import os
 ```
-## Define the function `cis-eQTL`
-cis-eQTL takes in three arguments, the chromosome number as an integer, the file path to the gene expression data as a string, and the file path for the annotation data as a string, and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
+## Define the function `ciseQTL`
+`ciseQTL` takes in three arguments, the chromosome number as an integer, the file path to the gene expression data as a string, and the file path for the annotation data as a string, and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
 
 ### Define the function `extract_protein`
 The gene expression data contains expression for various types of genes in the genome. Create the helper function `extract_protein` which returns the gene expression data and annotation data for only the protein-coding genes:
