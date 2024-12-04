@@ -25,7 +25,7 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 - Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that works with your device.
 - Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
 
-# Part 1
+# Part 1: Identifying cis-eQTLs
 Create a `.py` to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library. This part of the project is located in `part1.py` for reference. 
 ```py
 import pandas as pd
@@ -304,8 +304,9 @@ def cis_plot(sum_stats_path, gene):
     
   plt.show()
 ```
+This is the end of Part 1! Create a Jupyter Notebook to run your work by importing the `.py` file like `import part1` to experiement with different chromosomes and genes and visualize your work. Access the functions to call by referencing the `py` files as like `part1.ciseqtl` and `part1.cis_plot`.
 
-# Part 2
+# Part 2: Creating Polygenic Risk Scores
 
 ## Convert Tiffany's data into Plink file format
 First, convert Tiffany;'s data into vcf format. For this you will need the GRCh37 reference genome. Note that the following should be done in terminal.
@@ -341,7 +342,7 @@ In terminal, run the following command in Plink to merge the data:
 ```
 
 ## Generating PRS scores
-To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. There is also the optional third parameter `color` to specify a color for the histogram. If this argument is not given, a default color is used. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and may not transfer to GWAS obtained from other sources and may have different column names.
+To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. There is also the optional third parameter `color` to specify a color for the histogram. If this argument is not given, a default color is used. First create a new `.py` file to host your work for organization, though this is not necessary. This part of the project is located in `part2.py`. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and may not transfer to GWAS obtained from other sources and may have different column names.
 
 ### Preprocessing the GWAS data
 Define the following helper function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarct the effect allele from the `'STRONGEST SNP-RISK ALLELE'` column of the GWAS.
@@ -590,13 +591,13 @@ def prs(gwas_file, disease, color='steelblue'):
     return prs_score
 ```
 
-In order to find the PRS and its distribution for each disease, simply  `prs` with GWAS `tsv` file.
+In order to find the PRS and its distribution for each disease, import the `py` file into the Jupyter Notebook created before and simply call `prs` with GWAS `tsv` file.
 ```py
-diabetes = prs(diabetes_gwas.tsv, 'diabetes')
-heart = prs(heart_gwas.tsv, 'heart')
-parkinsons = prs(parkinsons_gwas.tsv, 'parkinsons')
-skinCancer = prs(skin_cancer_gwas.tsv, 'skinCancer')
-arthritis = prs(arthritis.tsv, 'arthritis')
+diabetes = part2.prs(diabetes_gwas.tsv, 'diabetes')
+heart = part2.prs(heart_gwas.tsv, 'heart')
+parkinsons = part2.prs(parkinsons_gwas.tsv, 'parkinsons')
+skinCancer = part2.prs(skin_cancer_gwas.tsv, 'skinCancer')
+arthritis = part2.prs(arthritis.tsv, 'arthritis')
 ```
 
 
