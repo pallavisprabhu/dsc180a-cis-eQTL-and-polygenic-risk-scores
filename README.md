@@ -33,6 +33,11 @@ import seaborn as sns
 import subprocess
 import os
 ```
+## Define the function `cis-eQTL`
+cis-eQTL takes in three arguments, the chromosome number as an integer, the file path to the gene expression data as a string, and the file path for the annotation data as a string, and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
+
+### Define the function `extract_protein`
+The gene expression data contains expression for various types of genes in the genome. Create the helper function `extract_protein` which returns the gene expression data and annotation data for only the protein-coding genes:
 
 Read in the expression data and gene expression data:
 ```py
@@ -46,12 +51,20 @@ protein_coding = annotations[annotations['TYPE'] == 'protein_coding']
 intersection = np.intersect1d(np.array(expression_df['TargetID'].apply(lambda x: x.split('.')[0])), np.array(protein_coding['SYM']))
 protein_exp = expression_df[expression_df['TargetID'].apply(lambda x: x.split('.')[0]).apply(lambda x: x in intersection)]
 ```
-
-## Define the function cis-eQTL
-cis-eQTL takes in one argument, the chromosome number as an integer, and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
-
-First, the function queries the protein_coding DataFrame to only include genes on that input chromosome. 
+The function should return the `protein_exp` DataFrame which contains all the expression levels for the protein-coding genes and the `protein_coding` DataFrame which contains the annotations for all the protein-coding genes:
 ```py
+def extract_protein(exp_path, annot_path):
+    expression_df = pd.read_csv(exp_path, delim_whitespace=True)
+    annotations = pd.read_csv(annot_path, delim_whitespace=True)
+    protein_coding = annotations[annotations['TYPE'] == 'protein_coding']
+    intersection = np.intersect1d(np.array(expression_df['TargetID'].apply(lambda x: x.split('.')[0])), np.array(protein_coding['SYM']))
+    protein_exp = expression_df[expression_df['TargetID'].apply(lambda x: x.split('.')[0]).apply(lambda x: x in intersection)]
+    return protein_exp, protein_coding
+```
+
+Call the previously defined `extract_protein` function and returns the gene expression and annotation DataFrames with nly the protein-coding genes. The, query the protein_coding DataFrame to only include genes on that input chromosome. 
+```py
+protein_exp, protein_coding = extract_protein(exp_path, annot_path)
 chrom = protein_coding[protein_coding['CHR'] == chromosome]
 ```
 
@@ -267,10 +280,11 @@ def ciseQTL(chromosome): #chromosome as an integer
 ```
 ## Defining the plotting function
 In order to plot the cis-eQTL, you need to plot it per gene since plotting the cis-eQTLs for the chromosome in its entirity would not make sense as we are interested in seeing which SNPs are statitsically significant in impacting gene expression for a specific gene.
-Create the function `cis_plot` which has two parameters, the summary statistics DataFrame created from the `cis-eQTL` function above, and a gene on that chromosome. The function filters the summary statistics to include information for only that gene and plots a locus plot, marking the threshold for signficance with a red dotted line for easier visualization. Note that instead of plotting the raw P-values, the $log_{10}(P-value)$ is plotted for better scaling. This means that lower P-values have higher $log_{10}(P-value)$ and data points above the line are significant.
+Create the function `cis_plot` which has two parameters, the file path to the summary statistics file as created from the `cis-eQTL` function above, and a gene on that chromosome. The function filters the summary statistics to include information for only that gene and plots a locus plot, marking the threshold for signficance with a red dotted line for easier visualization. Note that instead of plotting the raw P-values, the $log_{10}(P-value)$ is plotted for better scaling. This means that lower P-values have higher $log_{10}(P-value)$ and data points above the line are significant. Save the figure as a `png`. 
 
 ```py
-def cis_plot(sum_stats, gene):
+def cis_plot(sum_stats_path, gene):
+  sum_stats = pd.read_csv(sum_stats_path, sep='\t')
   chr = sum_stats['Chr'].iloc[0]
   filtered = sum_stats[sum_stats['Gene'] == gene].reset_index()
   sns.set(font_scale=1)
@@ -322,8 +336,11 @@ In terminal, run the following command in Plink to merge the data:
 ./plink --bfile ./LDREF/1000G.EUR.1 --merge-list all_chrs.txt --make-bed -out all_chromosomes
 ```
 
-## Preprocessing the GWAS data
-Define the following function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarctt the effect allele from one of the columns of the GWAS
+## Generating PRS scores
+To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the GWAS Catalog and may not transfer to GWAS obtained from other sources and may have different column names.
+
+### Preprocessing the GWAS data
+Define the following helper function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarct the effect allele from the `'STRONGEST SNP-RISK ALLELE'` column of the GWAS.
 ```py
 def extract_allele(rsid):
     al = rsid.split('-')[1]
@@ -358,35 +375,37 @@ def clean_gwas(gwas, dis):
 
     return diseases
 ```
-
-## Generating PRS scores
-To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the cleaned gwas `txt` file, and `disease`, the name of the disease as a string. The first step to creating a PRS score is to clump and threshold the data. Thresholding is the process of filtering out the SNPs that do not make the threshold of a specified P-value and $\text{R}^2$. Moreover, clumping is the process of removing dependent SNPs such that to limit linkage disequilibrium from closely associated or linked SNPs.
+Call the helper function `clean_gwas` on the file path to the GWAS data which will save the cleaned GWAS as a `txt` file to so it can be used in Plink:
+```py
+_ =  clean_gwas(gwas_file, disease)
+```
+To start creating a PRS score, clump and threshold the data. Thresholding is the process of filtering out the SNPs that do not make the threshold of a specified P-value and $\text{R}^2$. Moreover, clumping is the process of removing dependent SNPs such that to limit linkage disequilibrium from closely associated or linked SNPs.
 ```py
 command= [
-            './plink2',
-            '--bfile', f'all_chromosomes',
-            '--clump-p1', '.0001',
-            '--clump-r2', '0.2',
-            '--clump-kb', '500',
-            '--clump', f'{disease}.txt', 
-            '--clump-snp-field', 'SNPS', 
-            '--clump-field', 'P-VALUE',
-            '--out', f'./clumped_{disease}']
+    './plink2',
+    '--bfile', f'all_chromosomes',
+    '--clump-p1', '.0001',
+    '--clump-r2', '0.2',
+    '--clump-kb', '500',
+    '--clump', f'{disease}.txt', 
+    '--clump-snp-field', 'SNPS', 
+    '--clump-field', 'P-VALUE',
+    '--out', f'./clumped_{disease}']
     
-    try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
-    except subprocess.CalledProcessError as e:
-        pass
+try:
+  result = subprocess.run(command, check=True, capture_output=True, text=True)
+except subprocess.CalledProcessError as e:
+  pass
 ```
 
-In order to extract the SNP Id's from the clumped output, run the following command:
+In order to extract the SNP Ids from the clumped output, run the following command:
 
 ```py
 command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
 subprocess.run(command, shell=True, check=True)
 ```
 
-Now we create bfiles including only those extracted SNPs:
+Now we create Plink bfiles (`bed`,`bim`,`fam`) including only those extracted SNPs:
 ```py
 command = f"awk 'NR!=1{{print $3}}' ./clumped_{disease}.clumps > ./PRS.SNPs.{disease}"
 subprocess.run(command, shell=True, check=True)
@@ -436,9 +455,53 @@ except subprocess.CalledProcessError as e:
 
 prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 ```
+### Visualizing the PRS Scores
+It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the helper function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
+```py
+def prs_plot(prs_df, dis):
+    prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
+    tiff = prs[prs['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
+
+    sns.set(font_scale=1)
+    plt.figure(figsize=(10, 6))
+    plt.hist(prs_df['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
+    plt.axvline(tiff_heart, color='r', linestyle='--', label='Tiffany')
+    plt.xlabel('PRS Score')
+    plt.ylabel('Frequency')
+    plt.title(f"PRS Distribution for {dis} Disease")
+    plt.legend()
+
+    folder = f"./prs_graphs"
+    file_path = os.makedirs(folder, exist_ok=True)
+    plt.savefig(f"./prs_graphs/{dis}.png", dpi=300, bbox_inches='tight')
+
+    plt.show()
+```
+Call this function on the DataFrame `prs_score` that contains the PRS scores for each individual in the sample.
+
 The final `prs` function should like:
 ```py
-def prs(gwas, disease):
+def prs(gwas_file, disease):
+    def extract_allele(rsid):
+        al = rsid.split('-')[1]
+        if al.isalpha():
+            return al
+        return '.'
+        
+    def clean_gwas(file, dis):
+        disease = pd.read_csv(file, sep= '\t')
+        disease = disease[['CHR_ID','SNPS', 'OR or BETA', 'STRONGEST SNP-RISK ALLELE','P-VALUE']]
+        disease['A1'] = disease['STRONGEST SNP-RISK ALLELE'].apply(extract_allele)
+        disease['BETA'] = disease['OR or BETA']
+        disease = disease.drop(columns=['STRONGEST SNP-RISK ALLELE', 'OR or BETA' ])
+        disease = disease.loc[disease.groupby('SNPS')['P-VALUE'].idxmin()].reset_index(drop=True)
+        disease['EFFECT'] = disease['BETA'].apply(np.log)
+        disease = disease[disease['A1'] != '.'].dropna()
+        disease.to_csv(f'{dis}.txt', sep='\t', index=False)
+        return disease
+        
+    _ = clean_gwas(gwas_file, disease)
+    
     command= [
             './plink2',
             '--bfile', f'all_chromosomes',
@@ -497,44 +560,35 @@ def prs(gwas, disease):
         pass #print(e.stdout)
 
     prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
+
+    def prs_plot(dis):
+        #prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
+        tiff = prs_score[prs_score['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
+        sns.set(font_scale=1)
+        plt.figure(figsize=(10, 6))
+        plt.hist(prs_score['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
+        plt.axvline(tiff, color='r', linestyle='--', label='Tiffany')
+        plt.xlabel('PRS Score')
+        plt.ylabel('Frequency')
+        t = dis.title()
+        plt.title(f"PRS Distribution for {t} Disease")
+        plt.legend()
+        
+        folder = f"./prs_graphs"
+        file_path = os.makedirs(folder, exist_ok=True)
+        
+        plt.savefig(f"./prs_graphs/{dis}.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        
+    prs_plot(disease)
     return prs_score
 ```
 
-## Visualizing the PRS Scores
-It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
+In order to find the PRS and its distribution for each disease, simply  `prs` with GWAS `tsv` file.
 ```py
-def prs_plot(prs_df, dis):
-    prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
-    tiff = prs[prs['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
-
-    sns.set(font_scale=1)
-    plt.figure(figsize=(10, 6))
-    plt.hist(prs_df['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
-    plt.axvline(tiff_heart, color='r', linestyle='--', label='Tiffany')
-    plt.xlabel('PRS Score')
-    plt.ylabel('Frequency')
-    plt.title(f"PRS Distribution for {dis} Disease")
-    plt.legend()
-
-    folder = f"./prs_graphs"
-    file_path = os.makedirs(folder, exist_ok=True)
-    plt.savefig(f"./prs_graphs/{dis}.png", dpi=300, bbox_inches='tight')
-
-    plt.show()
-```
-In order to find the PRS and its distribution for each disease, simply call the `clean_gwas` function on each disease, call `prs` with the cleaned file, and call `prs_plot` with the name of the disease.
-```py
-diabetes = clean_gwas('diabetes_gwas.tsv', 'Diabetes')
-prs_diabetes = prs(diabetes, 'Diabetes')
-prs_plot('Diabetes')
-
-heart = clean_gwas('heart_gwas.tsv', 'Heart')
-prs_heart = prs(heart, 'Heart')
-prs_plot('Heart')
-
-parkinsons = clean_gwas('parkinsons_gwas.tsv', 'Parkinsons')
-prs_parkinsons = prs(parkinsons, 'Parkinsons')
-prs_plot('Parkinsons')
+diabetes = prs(diabetes_gwas.tsv, 'diabetes')
+heart = prs(heart_gwas.tsv, 'heart')
+parkinsons = prs(parkinsons_gwas.tsv, 'parkinsons')
 ```
 
 
