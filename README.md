@@ -1,4 +1,4 @@
-# Identifying cis-eQTLs in 1000 Genomes and Generating Polygenic Risk Scores for Heart Disease
+# Identification of cis-eQTLs in 1000 Genomes LCLs and Predicting Genetic Risk for Multiple Diseases with Polygenic Risk Scores
 
 # Overview
 ## Part 1:
@@ -337,7 +337,7 @@ In terminal, run the following command in Plink to merge the data:
 ```
 
 ## Generating PRS scores
-To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the GWAS Catalog and may not transfer to GWAS obtained from other sources and may have different column names.
+To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and may not transfer to GWAS obtained from other sources and may have different column names.
 
 ### Preprocessing the GWAS data
 Define the following helper function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarct the effect allele from the `'STRONGEST SNP-RISK ALLELE'` column of the GWAS.
