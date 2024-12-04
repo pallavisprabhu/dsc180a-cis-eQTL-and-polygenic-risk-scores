@@ -24,8 +24,8 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 - Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that works with your device.
 - Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
 
-# Completing Part 1
-Create a Jupyter Notebook to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library:
+# Part 1
+Create a `.py` to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library. This part of the project is located in `part1.py` for reference. 
 ```py
 import pandas as pd
 import numpy as np
@@ -149,7 +149,7 @@ for gene in successes:
   gene_id = protein_coding[protein_coding['ID'] == gene]['SYM']
   if gene not in successes:
     continue
-  exp = exp_protein[exp_protein['TargetID'].str.split('.').apply(lambda x: x[0]) == gene_id.values[0]]
+  exp = exp_protein[exp_protein['TargetID'].str.split('.').apply(lambda x: x[0]) == gene_id.values[0]] #extract the gene expression data for that gene
   if exp.shape[0] == 0:
     continue
   exp_df = exp.iloc[:,4:].transpose()
@@ -157,13 +157,13 @@ for gene in successes:
   gen_df = pd.read_csv(f"./genotypes_raw_{chromosome}/genotype_data_{gene}.raw", sep='\t')
   gen_df.set_index('IID', inplace=True)
 
-  common_samples = exp_df.index.intersection(gen_df.index)
+  common_samples = exp_df.index.intersection(gen_df.index) #find the common samples between the gene expression and genotype data
   exp_df = exp_df.loc[common_samples]
   gen_df = gen_df.loc[common_samples]
 
-  y = exp_df.iloc[:, 0].values
-  X = gen_df.loc[common_samples].iloc[:, 5:]
-  for snp in X.columns:
+  y = exp_df.iloc[:, 0].values #target vector is the gene expression
+  X = gen_df.loc[common_samples].iloc[:, 5:] #feature matrix is the genotypes
+  for snp in X.columns: #calculate the linear regression for each SNP (for each gene)
   try:
     slope, intercept, r_value, p_value, std_error = stats.linregress(X[[snp]].squeeze(), y)
     results.append({'Chr': chromosome, 'Gene': gene, 'SNP': snp,'beta_0': intercept, 'beta_1': slope, 'R_sq': (r_value**2), 'Standard Error': std_error,'P-value': p_value}) 
@@ -320,6 +320,7 @@ bcftools view tiffany.bcf -Ov -o tiffany.vcf #convert to vcf file format
 ./plink2 --vcf tiffany.vcf --make-bed --out tiffany_plink #convert to plink files
 
 ```
+You can also simply download Tiffany's data already in Plink file format as linked in the data section. If you choose to do this, make sure these files are in the same directory as the rets of your project or alter the file path in the code below where necessary.
 
 ## Merge chromosome data
 Since all the chromosome data from 1000 Genomes are in separate files and Tiffany has her own file, for ease of the program, merge the data into one set of Plink files. Create a text file `all_chrs.txt` with the paths to all the 1000 Genomes data and Tiffany's data, exluding the first chromosome as that will be the base file:
@@ -435,7 +436,7 @@ snp_file = f"./PRS.SNPs.{disease}"
 y = pd.read_csv(snp_file, header=None, sep="\t")
 y = y[y[0].str.len() > 0][0].tolist()
 dis = pd.read_csv(f'{disease}.txt', sep='\t')
-m = dis['SNPS'].isin(y)
+m = dis['SNPS'].isin(y) #find GWAS data for the SNPs we have extracted from clumping
 score = pd.DataFrame({
     'SNP': dis['SNPS'][m],
     'A1': dis['A1'][m],
