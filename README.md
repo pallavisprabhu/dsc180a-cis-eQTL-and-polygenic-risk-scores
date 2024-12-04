@@ -13,11 +13,12 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 3. Download [Tiffany's 23andme Data](https://drive.google.com/file/d/1m3eVt-FgkfmBW2w2UW_TDtzlXVpiBaCC/view?usp=sharing) 
    - Alternative: [Download Tiffany's Plink Data](https://drive.google.com/drive/folders/1rtoNkho05j12VBVHXJWAUt-rktS0ybNS?usp=sharing)
 5. Download the [GRCh37](https://ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz) reference genome
-6. Download [Diabetes GWAS](https://drive.google.com/file/d/1tCAYBW8KPqNlx3AGlbEWcOCZiOsXEQKe/view?usp=sharing) 
-7. Download [Heart Disease GWAS](https://drive.google.com/file/d/1muZDyipGbDmzNhRnNcrSeDL_1faY9l4c/view?usp=sharing)
-8. Download [Parkinson's GWAS](https://drive.google.com/file/d/1623dNwgbtf4cv0fcQuKKaIOEGErHcRs5/view?usp=sharing)
-9. Download [Skin Cancer Gwas](https://drive.google.com/file/d/1jx4bOyGr2UITtBeo951izRxqXCPPM1ON/view?usp=sharing)
-10. Download [Arthritis GWAS](https://drive.google.com/file/d/115mKOZl62sqwOmY9rozbG8FpihQZqcYc/view?usp=sharing)
+   - Note that the refernce genome is a large file and may take a while to download. An alternative to this is to simply download Tiffany's data already in Plink file format as linked above
+7. Download [Diabetes GWAS](https://drive.google.com/file/d/1tCAYBW8KPqNlx3AGlbEWcOCZiOsXEQKe/view?usp=sharing) 
+8. Download [Heart Disease GWAS](https://drive.google.com/file/d/1muZDyipGbDmzNhRnNcrSeDL_1faY9l4c/view?usp=sharing)
+9. Download [Parkinson's GWAS](https://drive.google.com/file/d/1623dNwgbtf4cv0fcQuKKaIOEGErHcRs5/view?usp=sharing)
+10. Download [Skin Cancer Gwas](https://drive.google.com/file/d/1jx4bOyGr2UITtBeo951izRxqXCPPM1ON/view?usp=sharing)
+11. Download [Arthritis GWAS](https://drive.google.com/file/d/115mKOZl62sqwOmY9rozbG8FpihQZqcYc/view?usp=sharing)
 
 # Running the Project
 - To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
