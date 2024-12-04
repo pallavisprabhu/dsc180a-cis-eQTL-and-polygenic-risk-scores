@@ -117,6 +117,11 @@ def cis_plot(sum_stats_path, gene):
     sum_stats = pd.read_csv(sum_stats_path, sep='\t')
     chr = sum_stats['Chr'].iloc[0]
     filtered = sum_stats[sum_stats['Gene'] == gene].reset_index()
+
+
+    sig = " ".join(list(sum_stats[(sum_stats['Gene'] == gene) & (sum_stats['P-value'] < 0.05)]['SNP'].values))
+    print(f"Statistically significant SNPs for {gene} on Chromsome {chr} are: {sig}")
+
     sns.set(font_scale=1)
     plt.figure(figsize=(10, 6))
     plt.title(f'cis-eQTLs of {gene} on Chromosome {chr}')
@@ -129,4 +134,5 @@ def cis_plot(sum_stats_path, gene):
     file_path = os.makedirs(folder, exist_ok=True)
     plt.savefig(f"./ciseqtls_graph/{gene}_chromosome{chr}.png", dpi=300, bbox_inches='tight')
     
-    plt.show()    
+    plt.show()
+       

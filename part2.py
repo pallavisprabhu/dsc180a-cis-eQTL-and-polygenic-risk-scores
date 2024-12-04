@@ -86,7 +86,6 @@ def prs(gwas_file, disease, color='steelblue'):
     prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 
     def prs_plot(dis):
-        #prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
         tiff = prs_score[prs_score['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
         sns.set(font_scale=1)
         plt.figure(figsize=(10, 6))
