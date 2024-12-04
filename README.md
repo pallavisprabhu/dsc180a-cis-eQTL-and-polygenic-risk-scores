@@ -598,6 +598,10 @@ arthritis = prs(arthritis.tsv, 'arthritis')
 ```
 
 
+# Conclusion
+Congrats! You have successfully completed this project! Experiment with Part 1 of the project by running `ciseQTL` on different chromosomes. With the results from this, try plotting different cis-eQTLs with the different genes on the chromosome. You can also experiment with Part 2 of the project by downloading different GWAS data from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and plot Tiffany's risk for different diseases compared to the population.
+
+
 
 
 
