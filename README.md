@@ -36,7 +36,7 @@ import subprocess
 import os
 ```
 ## Define the function `ciseQTL`
-`ciseQTL` takes in three arguments, the chromosome number as an integer, the file path to the gene expression data as a string, and the file path for the annotation data as a string, and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
+`ciseQTL` takes in one argument, the chromosome number as an integer and outputs a summary statistics file with the Chromosome, Gene, SNP, Beta_0, Beta_1, $R^2$, Standard Error, and P-value for every SNP for every gene on that chromosome.
 
 ### Define the function `extract_protein`
 The gene expression data contains expression for various types of genes in the genome. Create the helper function `extract_protein` which returns the gene expression data and annotation data for only the protein-coding genes:
@@ -53,11 +53,11 @@ protein_coding = annotations[annotations['TYPE'] == 'protein_coding']
 intersection = np.intersect1d(np.array(expression_df['TargetID'].apply(lambda x: x.split('.')[0])), np.array(protein_coding['SYM']))
 protein_exp = expression_df[expression_df['TargetID'].apply(lambda x: x.split('.')[0]).apply(lambda x: x in intersection)]
 ```
-The function should return the `protein_exp` DataFrame which contains all the expression levels for the protein-coding genes and the `protein_coding` DataFrame which contains the annotations for all the protein-coding genes:
+The function should return the `protein_exp` DataFrame which contains all the expression levels for the protein-coding genes and the `protein_coding` DataFrame which contains the annotations for all the protein-coding genes. Note that this code assumes that the gene expression file and annotation file are in the same directory and have not been renamed. If this is not the case, edit the code such that `pd.read_csv` in the helper function reads the file paths to each respective file.
 ```py
 def extract_protein(exp_path, annot_path):
-    expression_df = pd.read_csv(exp_path, delim_whitespace=True)
-    annotations = pd.read_csv(annot_path, delim_whitespace=True)
+    expression_df = pd.read_csv('GD462.GeneQuantRPKM.50FN.samplename.resk10.txt', delim_whitespace=True)
+    annotations = pd.read_csv('gene_annot.txt', delim_whitespace=True)
     protein_coding = annotations[annotations['TYPE'] == 'protein_coding']
     intersection = np.intersect1d(np.array(expression_df['TargetID'].apply(lambda x: x.split('.')[0])), np.array(protein_coding['SYM']))
     protein_exp = expression_df[expression_df['TargetID'].apply(lambda x: x.split('.')[0]).apply(lambda x: x in intersection)]
@@ -339,7 +339,7 @@ In terminal, run the following command in Plink to merge the data:
 ```
 
 ## Generating PRS scores
-To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and may not transfer to GWAS obtained from other sources and may have different column names.
+To generate PRS scores from GWAS data, define the function `prs` that has two parameters `gwas`, the file path to the `tsv` file, and `disease`, the name of the disease as a string. There is also the optional third parameter `color` to specify a color for the histogram. If this argument is not given, a default color is used. The first step is the clean the GWAS `tsv` file to make it usuable for to generate PRS scores. Note that the data wrangling done is specific to the GWAS data obtained from the [GWAS Catalog](https://www.ebi.ac.uk/gwas/) and may not transfer to GWAS obtained from other sources and may have different column names.
 
 ### Preprocessing the GWAS data
 Define the following helper function `extract_allele` to extract the effect allele from the SNP id (rsid). This will be used to clean the GWAS data to extarct the effect allele from the `'STRONGEST SNP-RISK ALLELE'` column of the GWAS.
@@ -460,30 +460,32 @@ prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 ### Visualizing the PRS Scores
 It's more informative and helpful to visulize the distribution of PRS scores on a plot like a histogram, especially since we want to isolate Tiffany's score and see where she falls in the distribution. Define the helper function `prs_plot` that takes in the file path to the prs data from above and the name of the disease as a string and outputs a histogram of the distrubution, labeling where Tiffany falls.
 ```py
-def prs_plot(prs_df, dis):
-    prs = pd.read_csv(f'./PRS_{dis}.sscore', sep='\t')
-    tiff = prs[prs['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
-
+def prs_plot(dis):
+    tiff = prs_score[prs_score['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
     sns.set(font_scale=1)
     plt.figure(figsize=(10, 6))
-    plt.hist(prs_df['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
-    plt.axvline(tiff_heart, color='r', linestyle='--', label='Tiffany')
+    plt.hist(prs_score['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes', color=color)
+    plt.axvline(tiff, color='r', linestyle='--', label='Tiffany')
     plt.xlabel('PRS Score')
     plt.ylabel('Frequency')
-    plt.title(f"PRS Distribution for {dis} Disease")
+    t = dis.title()
+    plt.title(f"PRS Distribution for {t} Disease")
     plt.legend()
-
+        
     folder = f"./prs_graphs"
     file_path = os.makedirs(folder, exist_ok=True)
+        
     plt.savefig(f"./prs_graphs/{dis}.png", dpi=300, bbox_inches='tight')
-
     plt.show()
 ```
 Call this function on the DataFrame `prs_score` that contains the PRS scores for each individual in the sample.
+```py
+prs_plot(disease)
+```
 
 The final `prs` function should like:
 ```py
-def prs(gwas_file, disease):
+def prs(gwas_file, disease, color='steelblue'):
     def extract_allele(rsid):
         al = rsid.split('-')[1]
         if al.isalpha():
@@ -559,7 +561,7 @@ def prs(gwas_file, disease):
     try:
         result = subprocess.run(command3, check=True)
     except subprocess.CalledProcessError as e:
-        pass #print(e.stdout)
+        pass
 
     prs_score = pd.read_csv(f'PRS_{disease}.sscore', sep='\t')
 
@@ -568,7 +570,7 @@ def prs(gwas_file, disease):
         tiff = prs_score[prs_score['IID'] == 'Tiffany']['SCORE1_AVG'].values[0]
         sns.set(font_scale=1)
         plt.figure(figsize=(10, 6))
-        plt.hist(prs_score['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes')
+        plt.hist(prs_score['SCORE1_AVG'], bins=50, alpha=0.7, label='1000 Genomes', color=color)
         plt.axvline(tiff, color='r', linestyle='--', label='Tiffany')
         plt.xlabel('PRS Score')
         plt.ylabel('Frequency')
