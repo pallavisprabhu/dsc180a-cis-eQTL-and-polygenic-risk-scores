@@ -22,9 +22,10 @@ Predict genetic risk for different diseases in 1000 Genomes individuals. Using T
 
 # Running the Project
 - To install the dependencies, run the following command from the root directory of the project: `pip install -r requirements.txt`
-- Download `bcftools` either [here](https://www.htslib.org/download/) or of you have Homebrew installed, by: `brew install bcftools`
-- Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that works with your device.
-- Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that works with your device.
+  - The necessary packages can also be installed individually by `pip install {package}` where package is the name of the package. Note that the necessary packages are `pandas`, `numpy`, `scipy`, `matplotlib.pyplot`, and `seaborn`.
+- Download `bcftools` either [here](https://www.htslib.org/download/), or of you have Homebrew installed, by: `brew install bcftools`
+- Download the version of [Plink](https://www.cog-genomics.org/plink/1.9/) that is compatible with your device.
+- Download the version of [Plink2](https://www.cog-genomics.org/plink/2.0/) that is compatible with your device.
 
 # Part 1: Identifying cis-eQTLs
 Create a `.py` to host your work and import the packages as noted by `requirements.txt` in addition to the `subprocess` and `os` library. This part of the project is located in `part1.py` for reference. 
