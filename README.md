@@ -285,25 +285,31 @@ def ciseQTL(chromosome): #chromosome as an integer
 ## Defining the plotting function
 In order to plot the cis-eQTL, you need to plot it per gene since plotting the cis-eQTLs for the chromosome in its entirity would not make sense as we are interested in seeing which SNPs are statitsically significant in impacting gene expression for a specific gene.
 Create the function `cis_plot` which has two parameters, the file path to the summary statistics file as created from the `cis-eQTL` function above, and a gene on that chromosome. The function filters the summary statistics to include information for only that gene and plots a locus plot, marking the threshold for signficance with a red dotted line for easier visualization. Note that instead of plotting the raw P-values, the $log_{10}(P-value)$ is plotted for better scaling. This means that lower P-values have higher $log_{10}(P-value)$ and data points above the line are significant. Save the figure as a `png`. 
+Print the SNP Ids for the SNPs that are belove the threshold for significance ($0.05$) by filtering the summary statistics by the gene and P-value and retrieving the SNP Ids.
 
 ```py
 def cis_plot(sum_stats_path, gene):
-  sum_stats = pd.read_csv(sum_stats_path, sep='\t')
-  chr = sum_stats['Chr'].iloc[0]
-  filtered = sum_stats[sum_stats['Gene'] == gene].reset_index()
-  sns.set(font_scale=1)
-  plt.figure(figsize=(10, 6))
-  plt.title(f'cis-eQTLs of {gene} on Chromosome {chr}')
-  plt.scatter(filtered.index, -np.log10(filtered['P-value']))
-  plt.axhline(y=-np.log10(0.05), color='r', linestyle='-')
-  plt.xlabel('SNPs')
-  plt.ylabel('-log10(P-value)')
+    sum_stats = pd.read_csv(sum_stats_path, sep='\t')
+    chr = sum_stats['Chr'].iloc[0]
+    filtered = sum_stats[sum_stats['Gene'] == gene].reset_index()
 
-  folder = f"./ciseqtls_graph"
-  file_path = os.makedirs(folder, exist_ok=True)
-  plt.savefig(f"./ciseqtls_graph/{gene}_chromosome{chr}.png", dpi=300, bbox_inches='tight')
+
+    sig = " ".join(list(sum_stats[(sum_stats['Gene'] == gene) & (sum_stats['P-value'] < 0.05)]['SNP'].values))
+    print(f"Statistically significant SNPs for {gene} on Chromsome {chr} are: {sig}")
+
+    sns.set(font_scale=1)
+    plt.figure(figsize=(10, 6))
+    plt.title(f'cis-eQTLs of {gene} on Chromosome {chr}')
+    plt.scatter(filtered.index, -np.log10(filtered['P-value']))
+    plt.axhline(y=-np.log10(0.05), color='r', linestyle='-') 
+    plt.xlabel('SNPs')
+    plt.ylabel('-log10(P-value)')
+
+    folder = f"./ciseqtls_graph"
+    file_path = os.makedirs(folder, exist_ok=True)
+    plt.savefig(f"./ciseqtls_graph/{gene}_chromosome{chr}.png", dpi=300, bbox_inches='tight')
     
-  plt.show()
+    plt.show()
 ```
 This is the end of Part 1! Create a Jupyter Notebook to run your work by importing the `.py` file like `import part1` to experiement with different chromosomes and genes and visualize your work. Access the functions to call by referencing the `py` files as like `part1.ciseqtl` and `part1.cis_plot`.
 
